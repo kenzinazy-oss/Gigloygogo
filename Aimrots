@@ -1,0 +1,172 @@
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+local aimbot = {
+    enabled = false,
+    fov = 120,
+    smoothness = 6,
+    teamcheck = true
+}
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 280, 0, 380)
+main.Position = UDim2.new(0.5, -140, 0.5, -190)
+main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+main.Active = true
+main.Draggable = true
+main.Parent = screenGui
+
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 45)
+title.BackgroundColor3 = Color3.fromRGB(255, 0, 80)
+title.Text = "BAD RUDY AIMBOT FOV"
+title.TextColor3 = Color3.new(1,1,1)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = main
+
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+minimizeBtn.Position = UDim2.new(1, -35, 0, 8)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+minimizeBtn.Text = "-"
+minimizeBtn.TextColor3 = Color3.new(1,1,1)
+minimizeBtn.TextScaled = true
+minimizeBtn.Parent = main
+
+local content = Instance.new("Frame")
+content.Size = UDim2.new(1, 0, 1, -45)
+content.Position = UDim2.new(0, 0, 0, 45)
+content.BackgroundTransparency = 1
+content.Parent = main
+
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.new(0.9, 0, 0, 50)
+toggle.Position = UDim2.new(0.05, 0, 0.05, 0)
+toggle.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+toggle.Text = "AIMBOT: OFF"
+toggle.TextColor3 = Color3.new(1,1,1)
+toggle.TextScaled = true
+toggle.Font = Enum.Font.GothamBold
+toggle.Parent = content
+
+local fovLabel = Instance.new("TextLabel")
+fovLabel.Size = UDim2.new(0.9, 0, 0, 30)
+fovLabel.Position = UDim2.new(0.05, 0, 0.22, 0)
+fovLabel.BackgroundTransparency = 1
+fovLabel.Text = "FOV: 120"
+fovLabel.TextColor3 = Color3.new(1,1,1)
+fovLabel.TextScaled = true
+fovLabel.Parent = content
+
+-- Slider FOV
+local sliderBar = Instance.new("Frame")
+sliderBar.Size = UDim2.new(0.9, 0, 0, 8)
+sliderBar.Position = UDim2.new(0.05, 0, 0.32, 0)
+sliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+sliderBar.Parent = content
+
+Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(0, 4)
+
+local sliderKnob = Instance.new("Frame")
+sliderKnob.Size = UDim2.new(0, 20, 0, 20)
+sliderKnob.Position = UDim2.new(0.5, -10, 0.5, -10)
+sliderKnob.BackgroundColor3 = Color3.fromRGB(255, 0, 80)
+sliderKnob.Parent = sliderBar
+
+Instance.new("UICorner", sliderKnob).CornerRadius = UDim.new(0.5, 0)
+
+local fovCircle = Instance.new("Frame")
+fovCircle.BackgroundTransparency = 0.75
+fovCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+fovCircle.BorderSizePixel = 2
+fovCircle.BorderColor3 = Color3.fromRGB(255, 0, 80)
+fovCircle.Parent = screenGui
+
+Instance.new("UICorner", fovCircle).CornerRadius = UDim.new(0.5, 0)
+
+local function updateFOV()
+    local percent = (aimbot.fov - 30) / (200 - 30)
+    sliderKnob.Position = UDim2.new(percent, -10, 0.5, -10)
+    fovCircle.Size = UDim2.new(0, aimbot.fov * 2, 0, aimbot.fov * 2)
+    fovCircle.Position = UDim2.new(0.5, -aimbot.fov, 0.5, -aimbot.fov)
+    fovLabel.Text = "FOV: " .. aimbot.fov
+end
+
+-- Slider Logic
+local dragging = false
+sliderBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+    end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if dragging then
+        local mouseX = game:GetService("UserInputService"):GetMouseLocation().X
+        local barPos = sliderBar.AbsolutePosition.X
+        local barSize = sliderBar.AbsoluteSize.X
+        local percent = math.clamp((mouseX - barPos) / barSize, 0, 1)
+        aimbot.fov = math.floor(30 + percent * (200 - 30))
+        updateFOV()
+    end
+end)
+
+-- Toggle & Minimize
+toggle.MouseButton1Click:Connect(function()
+    aimbot.enabled = not aimbot.enabled
+    toggle.Text = "AIMBOT: " .. (aimbot.enabled and "ON" or "OFF")
+    toggle.BackgroundColor3 = aimbot.enabled and Color3.fromRGB(170, 0, 0) or Color3.fromRGB(0, 170, 0)
+end)
+
+minimizeBtn.MouseButton1Click:Connect(function()
+    content.Visible = not content.Visible
+    minimizeBtn.Text = content.Visible and "-" or "+"
+end)
+
+updateFOV()
+
+-- Aimbot Logic
+game:GetService("RunService").RenderStepped:Connect(function()
+    if not aimbot.enabled then return end
+
+    local closest = nil
+    local shortest = aimbot.fov
+
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p \~= player and p.Character and p.Character:FindFirstChild("Head") then
+            if not aimbot.teamcheck or p.Team \~= player.Team then
+                local screenPos, onScreen = camera:WorldToViewportPoint(p.Character.Head.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+                    if dist < shortest then
+                        shortest = dist
+                        closest = p.Character.Head
+                    end
+                end
+            end
+        end
+    end
+
+    if closest then
+        local targetPos = camera:WorldToScreenPoint(closest.Position)
+        local current = Vector2.new(mouse.X, mouse.Y)
+        local target = Vector2.new(targetPos.X, targetPos.Y)
+        local newPos = current + (target - current) / aimbot.smoothness
+        mousemoverel(newPos.X - mouse.X, newPos.Y - mouse.Y)
+    end
+end)
+
+print("BAD RUDY AIMBOT FOV LOADED - SLIDER READY")
